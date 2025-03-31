@@ -1,18 +1,16 @@
 services:
   devrunner:
-    image: "devrunner-game"
-    restart: no
+    user: "1000:1000"
+    userns_mode: "keep-id:uid=1000,gid=1000"
     build:
       context: .
       dockerfile: ./Dockerfile.dev
-      args:
-        - USER_UID=${USER_UID}
     volumes:
       # Bind source directory
       - type: bind
         source: ./
         target: /home/devrunner/src
-      # Bind display
+        # Bind display
       - type: bind
         source: ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}
         target: /tmp/runtime-dir/${WAYLAND_DISPLAY}
@@ -21,8 +19,23 @@ services:
         source: /tmp/.X11-unix/X0
         target: /tmp/.X11-unix/X0
         read_only: true
+        # GPU
+      - type: bind
+        source: /sys/dev/char
+        target: /sys/dev/char
+        read_only: true
+      - type: bind
+        source: /sys/devices/platform # Specific to rockchip gpu
+        target: /sys/devices/platform
+        read_only: true
+    devices:
+      # GPU
+      - /dev/dri:/dev/dri
     environment:
       # Display environment
       - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
       - DISPLAY=${DISPLAY}
+
+x-podman:
+  in_pod: false
 
